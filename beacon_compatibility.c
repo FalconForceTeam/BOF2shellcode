@@ -306,12 +306,14 @@ BOOL toWideChar(char* src, wchar_t* dst, int max) {
 }
 
 char* BeaconGetOutputData(int *outsize) {
-    char* outdata = beacon_compatibility_output;
-    *outsize = beacon_compatibility_size;
-    beacon_compatibility_output = NULL;
-    beacon_compatibility_size = 0;
-    beacon_compatibility_offset = 0;
-    return outdata;
+    // TODO reimplement
+    return NULL;
+    // char* outdata = beacon_compatibility_output;
+    // *outsize = beacon_compatibility_size;
+    // beacon_compatibility_output = NULL;
+    // beacon_compatibility_size = 0;
+    // beacon_compatibility_offset = 0;
+    // return outdata;
 }
 
 #endif
