@@ -9,6 +9,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include "APIResolve.h"
 
 #if defined(_WIN32)
 #include <windows.h>
@@ -145,9 +146,11 @@ void* process_symbol(char* symbolstring) {
         DEBUG_PRINT("\t\tFunction: %s\n", localfunc);
         /* Resolve the symbols here, and set the functionpointervalue */
 #if defined(_WIN32)
-        llHandle = LoadLibraryA(locallib);
+        tLoadLibraryA _LoadLibraryA = (tLoadLibraryA)getFunctionPtr(HASH_KERNEL32, HASH_LoadLibraryA);
+        llHandle = _LoadLibraryA(locallib);
         DEBUG_PRINT("\t\tHandle: 0x%lx\n", llHandle);
-        functionaddress = GetProcAddress(llHandle, localfunc);
+        tGetProcAddress _GetProcAddress = (tGetProcAddress)getFunctionPtr(HASH_KERNEL32, HASH_GetProcAddress);
+        functionaddress = _GetProcAddress(llHandle, localfunc);
         DEBUG_PRINT("\t\tProcAddress: 0x%p\n", functionaddress);
 #endif
     }
@@ -189,6 +192,9 @@ int RunCOFF(char* functionname, unsigned char* coff_data, uint32_t filesize, uns
 #ifdef _WIN32
     /* NOTE: I just picked a size, look to see what is max/normal. */
     char* sectionMapping[25] = { 0 };
+    tVirtualFree _VirtualFree = (tVirtualFree)getFunctionPtr(HASH_KERNEL32, HASH_VirtualFree);
+    tVirtualAlloc _VirtualAlloc = (tVirtualAlloc)getFunctionPtr(HASH_KERNEL32, HASH_VirtualAlloc);
+
 #ifdef DEBUG
     int sectionSize[25] = { 0 };
 #endif
@@ -234,7 +240,7 @@ int RunCOFF(char* functionname, unsigned char* coff_data, uint32_t filesize, uns
          * before execution to either PAGE_READWRITE or PAGE_EXECUTE_READ
          * depending on the Section Characteristics. Parse them all again
          * before running and set the memory permissions. */
-        sectionMapping[counter] = VirtualAlloc(NULL, coff_sect_ptr->SizeOfRawData, MEM_COMMIT | MEM_RESERVE | MEM_TOP_DOWN, PAGE_EXECUTE_READWRITE);
+        sectionMapping[counter] = _VirtualAlloc(NULL, coff_sect_ptr->SizeOfRawData, MEM_COMMIT | MEM_RESERVE | MEM_TOP_DOWN, PAGE_EXECUTE_READWRITE);
 #ifdef DEBUG
         sectionSize[counter] = coff_sect_ptr->SizeOfRawData;
 #endif
@@ -249,9 +255,9 @@ int RunCOFF(char* functionname, unsigned char* coff_data, uint32_t filesize, uns
     /* Allocate and setup the GOT for functions, same here as above. */
 #ifdef _WIN32
 #ifdef _WIN64
-    functionMapping = VirtualAlloc(NULL, 2048, MEM_COMMIT | MEM_RESERVE | MEM_TOP_DOWN, PAGE_EXECUTE_READWRITE);
+    functionMapping = _VirtualAlloc(NULL, 2048, MEM_COMMIT | MEM_RESERVE | MEM_TOP_DOWN, PAGE_EXECUTE_READWRITE);
 #else
-    functionMapping = VirtualAlloc(NULL, 2048, MEM_COMMIT | MEM_RESERVE | MEM_TOP_DOWN, PAGE_EXECUTE_READWRITE);
+    functionMapping = _VirtualAlloc(NULL, 2048, MEM_COMMIT | MEM_RESERVE | MEM_TOP_DOWN, PAGE_EXECUTE_READWRITE);
 #endif
 #endif
 
@@ -426,10 +432,10 @@ int RunCOFF(char* functionname, unsigned char* coff_data, uint32_t filesize, uns
     cleanup :
             for (tempcounter = 0; tempcounter < 25; tempcounter++) {
                 if (sectionMapping[tempcounter]) {
-                    VirtualFree(sectionMapping[tempcounter], 0, MEM_RELEASE);
+                    _VirtualFree(sectionMapping[tempcounter], 0, MEM_RELEASE);
                 }
             }
-            VirtualFree(functionMapping, 0, MEM_RELEASE);
+            _VirtualFree(functionMapping, 0, MEM_RELEASE);
 #endif
             DEBUG_PRINT("Returning\n");
             return retcode;

