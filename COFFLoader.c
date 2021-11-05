@@ -451,7 +451,11 @@ int RunCOFF(char* functionname, unsigned char* coff_data, uint32_t filesize, uns
 }
 
 #ifdef COFF_STANDALONE
+#ifdef EXEVERSION
 int main(int argc, char* argv[]) {
+#else
+int go(void) {
+#endif
     char* coff_data = NULL;
     unsigned char* arguments = NULL;
     int argumentSize = 0;
@@ -463,12 +467,12 @@ int main(int argc, char* argv[]) {
     int checkcode = 0;
     tprintf _printf = (tprintf)getFunctionPtr(HASH_MSVCRT, HASH_printf);
 
+    #ifdef EXEVERSION
     if (argc < 3) {
         _printf("ERROR: %s go /path/to/object/file.o (arguments)\n", argv[0]);
         return 1;
     }
 
-    #ifdef EXEVERSION
     coff_data = (char*)getContents(argv[2], &filesize);
     if (coff_data == NULL) {
         return 1;
@@ -480,7 +484,7 @@ int main(int argc, char* argv[]) {
     #endif
 
     _printf("Running/Parsing the COFF file\n");
-    checkcode = RunCOFF(argv[1], (unsigned char*)coff_data, filesize, arguments, argumentSize);
+    checkcode = RunCOFF("go", (unsigned char*)coff_data, filesize, arguments, argumentSize);
     if (checkcode == 0) {
 #ifdef _WIN32
         _printf("Ran/parsed the coff\n");
