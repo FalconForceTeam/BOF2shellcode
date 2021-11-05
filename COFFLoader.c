@@ -34,6 +34,7 @@
 #define PREPENDSYMBOLVALUE "__imp__"
 #endif
 
+#ifdef EXEVERSION
 unsigned char* unhexlify(unsigned char* value, int *outlen) {
     unsigned char* retval = NULL;
     char byteval[3] = { 0 };
@@ -104,6 +105,7 @@ unsigned char* getContents(char* filepath, uint32_t* outsize) {
     *outsize = fsize;
     return buffer;
 }
+#endif
 
 /* Helper function to process a symbol string, determine what function and
  * library its from, and return the right function pointer. Will need to
@@ -194,12 +196,6 @@ int RunCOFF(char* functionname, unsigned char* coff_data, uint32_t filesize, uns
     uint64_t longoffsetvalue = 0;
 #endif
 #else
-    /* Set the input function name to match the 32 bit version */
-    entryfuncname = calloc(_strlen(functionname) + 2, 1);
-    if (entryfuncname == NULL) {
-        return 1;
-    }
-    (void)sprintf(entryfuncname, "_%s", functionname);
 #endif
 
 #ifdef _WIN32
@@ -465,34 +461,39 @@ int main(int argc, char* argv[]) {
 #endif
     uint32_t filesize = 0;
     int checkcode = 0;
+    tprintf _printf = (tprintf)getFunctionPtr(HASH_MSVCRT, HASH_printf);
+
     if (argc < 3) {
-        printf("ERROR: %s go /path/to/object/file.o (arguments)\n", argv[0]);
+        _printf("ERROR: %s go /path/to/object/file.o (arguments)\n", argv[0]);
         return 1;
     }
 
+    #ifdef EXEVERSION
     coff_data = (char*)getContents(argv[2], &filesize);
     if (coff_data == NULL) {
         return 1;
     }
-    printf("Got contents of COFF file\n");
+    _printf("Got contents of COFF file\n");
     arguments = unhexlify((unsigned char*)argv[3], &argumentSize);
-    printf("Running/Parsing the COFF file\n");
+    #else
+        // TODO get BOF file and arguments from memory somehow
+    #endif
+
+    _printf("Running/Parsing the COFF file\n");
     checkcode = RunCOFF(argv[1], (unsigned char*)coff_data, filesize, arguments, argumentSize);
     if (checkcode == 0) {
 #ifdef _WIN32
-        printf("Ran/parsed the coff\n");
+        _printf("Ran/parsed the coff\n");
         outdata = BeaconGetOutputData(&outdataSize);
         if (outdata != NULL) {
-            printf("Outdata Below:\n\n%s\n", outdata);
+            _printf("Outdata Below:\n\n%s\n", outdata);
         }
 #endif
     }
     else {
-        printf("Failed to run/parse the COFF file\n");
+        _printf("Failed to run/parse the COFF file\n");
     }
-    if (coff_data) {
-        free(coff_data);
-    }
+
     return 0;
 }
 

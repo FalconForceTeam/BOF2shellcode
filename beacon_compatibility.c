@@ -135,13 +135,14 @@ char* BeaconDataExtract(datap* parser, int* size) {
 /* format API */
 
 void BeaconFormatAlloc(formatp* format, int maxsz) {
-    if (format == NULL) {
-        return;
-    }
-    format->original = calloc(maxsz, 1);
-    format->buffer = format->original;
-    format->length = 0;
-    format->size = maxsz;
+    // TODO implement this again
+    // if (format == NULL) {
+    //     return;
+    // }
+    // format->original = calloc(maxsz, 1);
+    // format->buffer = format->original;
+    // format->length = 0;
+    // format->size = maxsz;
     return;
 }
 
@@ -153,16 +154,17 @@ void BeaconFormatReset(formatp* format) {
 }
 
 void BeaconFormatFree(formatp* format) {
-    if (format == NULL) {
-        return;
-    }
-    if (format->original) {
-        free(format->original);
-        format->original = NULL;
-    }
-    format->buffer = NULL;
-    format->length = 0;
-    format->size = 0;
+    // TODO reimplement
+    // if (format == NULL) {
+    //     return;
+    // }
+    // if (format->original) {
+    //     free(format->original);
+    //     format->original = NULL;
+    // }
+    // format->buffer = NULL;
+    // format->length = 0;
+    // format->size = 0;
     return;
 }
 
@@ -174,22 +176,29 @@ void BeaconFormatAppend(formatp* format, char* text, int len) {
 }
 
 void BeaconFormatPrintf(formatp* format, char* fmt, ...) {
-    /*Take format string, and sprintf it into here*/
+    // TODO reimplement
+    tprintf _printf = (tprintf)getFunctionPtr(HASH_MSVCRT, HASH_printf);
     va_list args;
-    int length = 0;
-
     va_start(args, fmt);
-    length = vsnprintf(NULL, 0, fmt, args);
+    _printf(fmt, args);
     va_end(args);
-    if (format->length + length > format->size) {
-        return;
-    }
 
-    va_start(args, fmt);
-    (void)vsnprintf(format->buffer, length, fmt, args);
-    va_end(args);
-    format->length += length;
-    format->buffer += length;
+    // /*Take format string, and sprintf it into here*/
+    // va_list args;
+    // int length = 0;
+
+    // va_start(args, fmt);
+    // length = vsnprintf(NULL, 0, fmt, args);
+    // va_end(args);
+    // if (format->length + length > format->size) {
+    //     return;
+    // }
+
+    // va_start(args, fmt);
+    // (void)vsnprintf(format->buffer, length, fmt, args);
+    // va_end(args);
+    // format->length += length;
+    // format->buffer += length;
     return;
 }
 
@@ -215,42 +224,16 @@ void BeaconFormatInt(formatp* format, int value) {
 /* Main output functions */
 
 void BeaconPrintf(int type, char* fmt, ...) {
-    /* Change to maintain internal buffer, and return after done running. */
-    int length = 0;
-    char* tempptr = NULL;
+    tprintf _printf = (tprintf)getFunctionPtr(HASH_MSVCRT, HASH_printf);
     va_list args;
     va_start(args, fmt);
-    vprintf(fmt, args);
-    va_end(args);
-
-    va_start(args, fmt);
-    length = vsnprintf(NULL, 0, fmt, args);
-    va_end(args);
-    tempptr = realloc(beacon_compatibility_output, beacon_compatibility_size + length + 1);
-    if (tempptr == NULL) {
-        return;
-    }
-    beacon_compatibility_output = tempptr;
-    _memset(beacon_compatibility_output + beacon_compatibility_offset, 0, length + 1);
-    va_start(args, fmt);
-    length = vsnprintf(beacon_compatibility_output + beacon_compatibility_offset, length, fmt, args);
-    beacon_compatibility_size += length;
-    beacon_compatibility_offset += length;
+    _printf(fmt, args);
     va_end(args);
     return;
 }
 
 void BeaconOutput(int type, char* data, int len) {
-    char* tempptr = NULL;
-    tempptr = realloc(beacon_compatibility_output, beacon_compatibility_size + len + 1);
-    beacon_compatibility_output = tempptr;
-    if (tempptr == NULL) {
-        return;
-    }
-    _memset(beacon_compatibility_output + beacon_compatibility_offset, 0, len + 1);
-    _memcpy(beacon_compatibility_output + beacon_compatibility_offset, data, len);
-    beacon_compatibility_size += len;
-    beacon_compatibility_offset += len;
+    _puts(data);
     return;
 }
 
