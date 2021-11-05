@@ -511,7 +511,16 @@ int go(void) {
     _printf("Got contents of COFF file\n");
     arguments = unhexlify((unsigned char*)argv[3], &argumentSize);
     #else
-        // TODO get BOF file and arguments from memory somehow
+        unsigned char* seek_offset = (unsigned char*) go;
+        // Find the magic header 0xe9e63f1c in memory
+        while (1) {
+            if (seek_offset[0] == 0x1c && seek_offset[1] == 0x3f && seek_offset[2] == 0xe6 && seek_offset[3] == 0xe9) {
+                break;
+            }
+            seek_offset += 1;
+        }
+        filesize = *(uint32_t*)(seek_offset+4);
+        coff_data = seek_offset+8;
     #endif
 
     char msg[] = {'R','u','n','n','i','n','g','/','P','a','r','s','i','n','g',' ','t','h','e',' ','C','O','F','F',' ','f','i','l','e',0x0a, 0x00};
