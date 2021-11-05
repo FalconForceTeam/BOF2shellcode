@@ -11,6 +11,8 @@
 #include <stdint.h>
 #include <stdarg.h>
 #include "APIResolve.h"
+#include "ministdlib.h"
+
 #ifdef _WIN32
 #include <windows.h>
 
@@ -86,7 +88,7 @@ int BeaconDataInt(datap* parser) {
     if (parser->length < 4) {
         return 0;
     }
-    memcpy(&fourbyteint, parser->buffer, 4);
+    _memcpy(&fourbyteint, parser->buffer, 4);
     parser->buffer += 4;
     parser->length -= 4;
     return (int)fourbyteint;
@@ -97,7 +99,7 @@ short BeaconDataShort(datap* parser) {
     if (parser->length < 2) {
         return 0;
     }
-    memcpy(&retvalue, parser->buffer, 2);
+   _memcpy(&retvalue, parser->buffer, 2);
     parser->buffer += 2;
     parser->length -= 2;
     return (short)retvalue;
@@ -114,7 +116,7 @@ char* BeaconDataExtract(datap* parser, int* size) {
     if (parser->length < 4) {
         return NULL;
     }
-    memcpy(&length, parser->buffer, 4);
+   _memcpy(&length, parser->buffer, 4);
     parser->buffer += 4;
 
     outdata = parser->buffer;
@@ -144,7 +146,7 @@ void BeaconFormatAlloc(formatp* format, int maxsz) {
 }
 
 void BeaconFormatReset(formatp* format) {
-    memset(format->original, 0, format->size);
+    _memset(format->original, 0, format->size);
     format->buffer = format->original;
     format->length = format->size;
     return;
@@ -165,7 +167,7 @@ void BeaconFormatFree(formatp* format) {
 }
 
 void BeaconFormatAppend(formatp* format, char* text, int len) {
-    memcpy(format->buffer, text, len);
+   _memcpy(format->buffer, text, len);
     format->buffer += len;
     format->length += len;
     return;
@@ -204,7 +206,7 @@ void BeaconFormatInt(formatp* format, int value) {
         return;
     }
     outdata = swap_endianess(indata);
-    memcpy(format->buffer, &outdata, 4);
+   _memcpy(format->buffer, &outdata, 4);
     format->length += 4;
     format->buffer += 4;
     return;
@@ -229,7 +231,7 @@ void BeaconPrintf(int type, char* fmt, ...) {
         return;
     }
     beacon_compatibility_output = tempptr;
-    memset(beacon_compatibility_output + beacon_compatibility_offset, 0, length + 1);
+    _memset(beacon_compatibility_output + beacon_compatibility_offset, 0, length + 1);
     va_start(args, fmt);
     length = vsnprintf(beacon_compatibility_output + beacon_compatibility_offset, length, fmt, args);
     beacon_compatibility_size += length;
@@ -245,8 +247,8 @@ void BeaconOutput(int type, char* data, int len) {
     if (tempptr == NULL) {
         return;
     }
-    memset(beacon_compatibility_output + beacon_compatibility_offset, 0, len + 1);
-    memcpy(beacon_compatibility_output + beacon_compatibility_offset, data, len);
+    _memset(beacon_compatibility_output + beacon_compatibility_offset, 0, len + 1);
+    _memcpy(beacon_compatibility_output + beacon_compatibility_offset, data, len);
     beacon_compatibility_size += len;
     beacon_compatibility_offset += len;
     return;
@@ -290,17 +292,17 @@ void BeaconGetSpawnTo(BOOL x86, char* buffer, int length) {
     }
     if (x86) {
         tempBufferPath = "C:\\Windows\\"X86PATH"\\"DEFAULTPROCESSNAME;
-        if (strlen(tempBufferPath) > length) {
+        if (_strlen(tempBufferPath) > length) {
             return;
         }
-        memcpy(buffer, tempBufferPath, strlen(tempBufferPath));
+        _memcpy(buffer, tempBufferPath, _strlen(tempBufferPath));
     }
     else {
         tempBufferPath = "C:\\Windows\\"X64PATH"\\"DEFAULTPROCESSNAME;
-        if (strlen(tempBufferPath) > length) {
+        if (_strlen(tempBufferPath) > length) {
             return;
         }
-        memcpy(buffer, tempBufferPath, strlen(tempBufferPath));
+        _memcpy(buffer, tempBufferPath, _strlen(tempBufferPath));
 
     }
     return;
